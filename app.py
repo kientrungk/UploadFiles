@@ -7,7 +7,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from urllib.parse import urlparse
-
+import os
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
@@ -17,6 +17,14 @@ cloudinary.config(
     cloud_name="dyjxihibh",
     api_key="338181975621148",
     api_secret="AXZ7ILb7KS2ci5p8jOSAXmvfZdg",
+    secure=True
+)
+
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
     secure=True
 )
 
