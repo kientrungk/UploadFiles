@@ -760,30 +760,49 @@ async function loadFolders() {
         }
 
         sidebar.innerHTML = data.folders.map(f => `
-            <div class="folder-item"
-                 id="folder_${f.name}"
-                 onclick="selectFolder('${f.name}')">
-                <div class="folder-name">${f.display_name}</div>
-                <div class="folder-info">${f.exam_date} • ${f.file_count} file</div>
-            </div>
-        `).join('');
+    <div class="folder-item" id="folder_${f.name}">
+        <div onclick="selectFolder('${f.name}')">
+            <div class="folder-name">${f.display_name}</div>
+            <div class="folder-info">${f.exam_date} • ${f.file_count} file</div>
+        </div>
+        <div style="margin-top:6px;">
+            <button class="btn"
+                style="font-size:11px;color:#d13438"
+                onclick="event.stopPropagation(); deleteFolder('${f.name}')">
+                ❌ Xóa
+            </button>
+        </div>
+    </div>
+`).join('');
+
     } catch (e) {
         console.error(e);
         showToast('Không tải được danh sách đoàn khám');
     }
 }
 function selectFolder(folderName) {
-    currentFolder = folderName;
+    const item = document.getElementById('folder_' + folderName);
 
+    if (currentFolder === folderName) {
+        // Nếu click vào folder đang chọn -> bỏ chọn
+        currentFolder = null;
+        item.classList.remove('selected');
+        document.getElementById('folderContent').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+        return;
+    }
+
+    // Xóa class selected của tất cả folder
     document.querySelectorAll('.folder-item').forEach(el => {
         el.classList.remove('selected');
     });
 
-    const item = document.getElementById('folder_' + folderName);
-    if (item) item.classList.add('selected');
+    currentFolder = folderName;
+    item.classList.add('selected');
 
     loadFolderContent(folderName);
 }
+
 
 async function loadFolderContent(folderName) {
     const res = await fetch(`/get_folder_info/${folderName}`);
@@ -861,6 +880,36 @@ function showToast(message, duration = 3000) {
         toast.className = toast.className.replace('show', '');
     }, duration);
 }
+
+/* ================== DELETE FOLDER ================== */
+async function deleteFolder(folderName) {
+    if (!confirm('Xóa toàn bộ đoàn khám và tất cả file bên trong?')) return;
+
+    try {
+        const res = await fetch(`/delete_folder/${folderName}`, {
+            method: 'DELETE'
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            showToast('Đã xóa đoàn khám');
+
+            if (currentFolder === folderName) {
+                currentFolder = null;
+                document.getElementById('folderContent').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+
+            loadFolders();
+        } else {
+            showToast(result.message || 'Xóa thất bại');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Lỗi khi xóa đoàn khám');
+    }
+}
+</script>
 
 </script>
 <div id="toast"></div>
